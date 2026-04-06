@@ -4,48 +4,121 @@ Inter-Integrated Circuit atau I2C merupakan sebuah protokol komunikasi yang digu
 
 ![lcd i2c ucky](https://github.com/user-attachments/assets/55bb3ac9-6474-4573-8281-723fe48dbf01)
 
-<h2>I2C Liquid Crystal Displays</h2>
+<h2>Mengetahui Alamat I2C</h2>
 
-Display digunakan untuk menampilkan informasi dari sistem embedded. Display ini memiliki jenis yang cukup beragam. Beberapa di antaranya adalah sebagai berikut.
-- LED (Light Emitting Diode)
-- 7 Segment LED
-- LCD (Liquid Crystal Display)
-- OLED (Organic LED)
-- TFT (Thin-Film Transistor)
+Bayangkan protokol komunikasi I2C sebagai sebuah Bus Sekolah.
 
-LCD (Liquid Crystal Display) adalah jenis media tampilan dengan layar panel datar yang menggunakan kristal cair dalam pengoperasian utamanya. LCD ini sudah banyak digunakan di berbagai bidang hingga sekarang ini, seperti televisi, kalkulator, dan layar laptop atau komputer. LCD membutuhkan daya listrik yang rendah, memiliki bentuk yang tipis, mengeluarkan sedikit panas, dan memiliki resolusi yang tinggi. Kualitas tampilan layar LCD ditentukan oleh jumlah piksel. Semakin banyak jumlah piksel, maka akan semakin tinggi resolusi yang ditampilkan pada layar. Dalam sistem embedded, LCD dapat digunakan sebagai display sederhana yang dihubungkan langsung dengan board untuk mencetak data sensor, hitungan mundur sederhana, menampilkan scrolling text, dan masih banyak lagi.
+- Arduino adalah Supir Bus (Master).
+- Sensor & Layar adalah Penumpang (Slave).
 
-![71iv4XG9uXL _AC_UF1000,1000_QL80_](https://github.com/user-attachments/assets/128075a8-994d-4caa-a5d1-41579c29ff35)
+Hebatnya I2C, semua penumpang ini duduk di jalur kabel yang sama (hanya dua kabel: SDA dan SCL). Agar Pak Supir (Arduino) bisa berbicara ke penumpang tertentu tanpa yang lain ikut menyahut, setiap penumpang wajib memiliki Nomor Kursi yang unik.
 
-LCD pada dasarnya terdiri dari dua bagian utama, yaitu backlight (lampu latar belakang) dan liquid crystal (kristal cair). Meskipun demikian, ada beberapa jenis layar LCD yang tidak menggunakan lapisan backlight. LCD ini tidak dapat menghasilkan cahaya, melainkan hanya akan merefleksikan dan mentransmisikan cahaya yang melaluinya. Oleh karena itu, LCD membutuhkan backlight sebagai sumber cahayanya. Backlight akan memberikan pencahayaan pada kristal cair. Apabila ingin menghasilkan warna, maka kristal cair ini dibuka selebar-lebarnya sehingga cahaya dapat masuk. Sebaliknya, apabila ingin menampilkan warna hitam, maka kristal cair harus ditutup serapat-rapatnya supaya tidak ada cahaya yang menembus. Untuk menampilkan gambar atau tulisan pada layar LCD, kristal cair ini akan diatur sehingga cahaya yang nantinya tidak dapat mencapai layar akan membuat piksel berwarna sangat gelap yang membentuk tampilan gambar atau tulisan.
+Nah, Nomor Kursi itulah yang disebut I2C Address.
 
-Berikut adalah contoh penerapan dengan menggunakan Tinkercad
+<h3>Mengapa ditulis 0x?</h3>
+
+Format seperti 0x3C adalah penulisan bilangan Hexadesimal (bilangan basis 16).
+
+0x hanyalah kode bagi komputer yang berarti: “Hei, angka di belakang ini adalah Hexadesimal.”
+
+Meskipun Anda bisa menulisnya dalam bentuk desimal, standar internasional dalam pemrograman hardware selalu menggunakan format 0x ini.
+
+<h3>Daftar Lengkap Alamat I2C</h3>
+
+Berikut adalah daftar perangkat yang paling populer di kalangan maker, dikelompokkan berdasarkan fungsinya. Simpan tabel ini agar Anda tidak perlu bolak-balik mencari datasheet.
+
+- Display (Layar Tampilan)
+
+  Display adalah komponen yang paling sering membuat bingung karena satu jenis barang bisa memiliki alamat berbeda tergantung pabriknya.
+
+  <img width="995" height="616" alt="Screenshot 2026-04-06 084154" src="https://github.com/user-attachments/assets/18df9272-14bc-4c1e-946e-3d4825c51732" />
+
+- Sensor Lingkungan (Suhu, Cuaca, Cahaya)
+
+  Kelompok sensor ini sering digunakan untuk proyek Stasiun Cuaca atau Smart Garden.
+
+  <img width="994" height="691" alt="Screenshot 2026-04-06 084259" src="https://github.com/user-attachments/assets/6f59ed5d-8e18-433a-a7a3-eee842a00a41" />
+
+- Motion & Time (Gerak & Waktu)
+
+  Perhatian: Ini adalah zona rawan konflik! Banyak modul di kategori ini menggunakan alamat yang sama (0x68).
+
+  <img width="996" height="616" alt="Screenshot 2026-04-06 084404" src="https://github.com/user-attachments/assets/d27ffe81-d8ad-4eae-8691-5a1e8577151d" />
+
+- Kontrol Tambahan
+
+  <img width="991" height="463" alt="Screenshot 2026-04-06 084439" src="https://github.com/user-attachments/assets/cc3811b6-3626-40b7-aa94-24f357574287" />
+
+<h4>Memeriksa Alamat Display I2C</h4>
+
 ```cpp
-#include <Adafruit_LiquidCrystal.h>
+#include <Arduino.h>
+#include <Wire.h>   // Library untuk komunikasi I2C
 
-Adafruit_LiquidCrystal lcd(0);
-
-void setup() {
-  lcd.begin(16, 2);        // Inisialisasi LCD
-  lcd.clear();       // Membersihkan tampilan LCD
-  lcd.setBacklight(HIGH);   // Menghidupkan lampu latar (backlight)
-
-  // Menampilkan pesan pada LCD
-  lcd.setCursor(2, 0);  // Posisi kolom ke-2, baris ke-0
-  lcd.print("Hello World!");
-
-  lcd.setCursor(2, 1);  // Posisi kolom ke-2, baris ke-1
-  lcd.print("Tutorial LCD");
+void setup()
+{
+  Wire.begin();           // Inisialisasi komunikasi I2C sebagai master
+  Serial.begin(9600);     // Inisialisasi komunikasi serial dengan baudrate 9600
 }
+  
+void loop()
+{
+  byte error, address;    // Variabel untuk menyimpan status error dan alamat I2C
+  int nDevices;           // Variabel untuk menghitung jumlah device yang terdeteksi
 
-void loop() {
-  // Tidak ada perintah berulang
+  Serial.println("Scanning...");  // Menampilkan pesan scanning ke serial monitor
+  nDevices = 0;                  // Reset jumlah device
+
+  // Loop untuk mengecek semua alamat I2C dari 1 sampai 126
+  for(address = 1; address < 127; address++ )
+  {
+    Wire.beginTransmission(address);  // Mulai komunikasi ke alamat tertentu
+    error = Wire.endTransmission();   // Mengakhiri komunikasi dan cek apakah ada respon
+  
+    // Jika tidak ada error (device merespon)
+    if (error == 0)
+    {
+      Serial.print("I2C terbaca pada alamat 0x");
+      
+      // Jika alamat < 16, tambahkan 0 di depan (format hex)
+      if (address < 16)
+        Serial.print("0");
+      
+      Serial.print(address, HEX); // Tampilkan alamat dalam format HEX
+      Serial.println("  !");
+  
+      nDevices++; // Tambah jumlah device yang ditemukan
+    }
+    
+    // Jika error = 4 (error tidak diketahui)
+    else if (error == 4)
+    {
+      Serial.print("Ada error yang tidak diketahui pada alamat 0x");
+      
+      if (address < 16)
+        Serial.print("0");
+      
+      Serial.println(address, HEX);
+    }    
+  }
+
+  // Jika tidak ada device ditemukan
+  if (nDevices == 0)
+    Serial.println("Tidak ada satupun alamat I2C yang ditemukan\n");
+  else
+    Serial.println("selesai\n");  // Jika ada device, tampilkan selesai
+  
+  delay(5000); // Delay 5 detik sebelum scanning ulang
 }
 ```
 
-Berikutnya compile dan upload program ke dalam Arduino board. Perhatikan hasil yang terjadi, apakah sesuai dengan spesifikasi atau tidak.
+Berikut penerapannya melalui Tinkercad
 
-https://github.com/user-attachments/assets/f093c6b6-7f0c-47d5-9ed7-c90b6afa22fa
+https://github.com/user-attachments/assets/7efbadcc-b761-4d92-8c29-9699a539d226
+
+Ada perbedaan jika diterapkan pada Wokwi
+
+https://github.com/user-attachments/assets/9bdc8718-454d-48f3-b8a3-3c6fca5dcb8a
 
 <h2></h2>
 
